@@ -8,10 +8,13 @@ enum alt_keycodes {
     DBG_KBD,               //DEBUG Toggle Keyboard Prints
     DBG_MOU,               //DEBUG Toggle Mouse Prints
     MD_BOOT,               //Restart into bootloader after hold timeout
+    DYNAMIC_MACRO_RANGE,    //Dynamic macros
+};
+
+enum tap_keys {
     TD_CAD,
     TD_LOCK,
     TD_UNLK,
-    DYNAMIC_MACRO_RANGE,    //Dynamic macros
 };
 
 #include "dynamic_macro.h"
@@ -125,9 +128,9 @@ void ctlaltdel_up (qk_tap_dance_state_t *state, void *user_data) {
 }
 
 qk_tap_dance_action_t tap_dance_actions[] = {
-      /* [TD_UNLK] = ACTION_TAP_DANCE_DUAL_ROLE(XXXXXXX, _BASE), */
-      /* [TD_LOCK]  = ACTION_TAP_DANCE_FN_ADVANCED(NULL, ctlaltdel_down, ctlaltdel_up), */
-/*       [TD_CAD]  = ACTION_TAP_DANCE_FN_ADVANCED(NULL, ctlaltdel_down, ctlaltdel_up) */
+      [TD_UNLK] = ACTION_TAP_DANCE_DUAL_ROLE(XXXXXXX, _BASE),
+      [TD_LOCK]  = ACTION_TAP_DANCE_FN_ADVANCED(NULL, ctlaltdel_down, ctlaltdel_up),
+      [TD_CAD]  = ACTION_TAP_DANCE_FN_ADVANCED(NULL, ctlaltdel_down, ctlaltdel_up)
 };
 
 
