@@ -8,19 +8,31 @@ enum alt_keycodes {
     DBG_KBD,               //DEBUG Toggle Keyboard Prints
     DBG_MOU,               //DEBUG Toggle Mouse Prints
     MD_BOOT,               //Restart into bootloader after hold timeout
+    TD_CAD,
+    TD_LOCK,
+    TD_UNLK,
+    DYNAMIC_MACRO_RANGE,    //Dynamic macros
 };
 
+#include "dynamic_macro.h"
+#define KC_DRS1 DYN_REC_START1
+#define KC_DRS2 DYN_REC_START2
+#define KC_DMP1 DYN_MACRO_PLAY1
+#define KC_DMP2 DYN_MACRO_PLAY2
+#define KC_DRS  DYN_REC_STOP
+#define TG_NKRO MAGIC_TOGGLE_NKRO //Toggle 6KRO / NKRO mode
 
 enum alt_layers {
     _BASE,
     _NUMPAD,
     _FNAV,
     _LED,
-    _LOCK
+    _LED_ONLY,
+    _LOCK,
+    _SYS,
 };
 
 
-#define TG_NKRO MAGIC_TOGGLE_NKRO //Toggle 6KRO / NKRO mode
 
 keymap_config_t keymap_config;
 
@@ -40,24 +52,38 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         _______, _______, _______,                            KC_PENT,                         _______, _______, _______, _______, _______ \
     ),
     [_FNAV] = LAYOUT(
-        KC_GRV,    KC_F1,   KC_F2,   KC_F3,   KC_F4,   KC_F5,   KC_F6,   KC_F7, KC_F8,    KC_F9,  KC_F10,  KC_F11,  KC_F12,  _______, _______, \
-        KC_CAPS, _______, _______, _______, _______, _______, _______, KC_PGUP, KC_UP,  KC_PGDN, KC_PSCR, _______, _______,   KC_DEL, _______,  \
-        _______, _______, KC_BTN2, KC_BTN1, _______, _______, KC_HOME, KC_LEFT, KC_DOWN,KC_RGHT,  KC_INS, _______,           _______, _______,\
-        _______,  KC_APP, _______, KC_CALC, _______, _______, KC_END,  _______, _______, _______, _______, _______,          KC_VOLU, _______,\
-        _______, _______, _______,                            _______,                       TD(TD_CAD), KC_NLCK, KC_MUTE, KC_VOLD, KC_MPLY \
+        KC_GRV,    KC_F1,   KC_F2,   KC_F3,   KC_F4,   KC_F5,   KC_F6,   KC_F7, KC_F8,    KC_F9,  KC_F10,  KC_F11,  KC_F12,  _______, TG(_LOCK), \
+        KC_CAPS, KC_DMP2, _______, _______, _______, _______, _______, KC_PGUP, KC_UP,  KC_PGDN, KC_PSCR, _______, _______,   KC_DEL, _______,  \
+        _______, KC_DMP1, KC_BTN2, KC_BTN1, _______, _______, KC_HOME, KC_LEFT, KC_DOWN,KC_RGHT,  KC_INS, _______,           _______, _______,\
+        _______,  KC_APP, _______, KC_CALC, _______, _______, KC_END,  _______, _______, _______, _______, _______,          KC_VOLU, OSL(_SYS),\
+        _______, _______, _______,                            _______,                              KC_NO, KC_NLCK, KC_MUTE, KC_VOLD, KC_MPLY \
     ),
     [_LED] = LAYOUT(
-        _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, TO(_LOCK), \
+        _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, TO(_LED_ONLY), \
         _______, RGB_SPD, RGB_VAI, RGB_SPI, RGB_HUI, RGB_SAI, _______, _______, _______, _______, _______, _______, _______, _______, _______,  \
         _______, RGB_RMOD,RGB_VAD, RGB_MOD, RGB_HUD, RGB_SAD, _______, _______, _______, _______, _______, _______,          _______, _______, \
-        _______, RGB_M_B, RGB_TOG, RGB_M_SW,RGB_M_K, MD_BOOT, TG_NKRO, _______, _______, _______, _______, _______,          _______, _______, \
+        _______, RGB_M_B, RGB_TOG, RGB_M_SW,RGB_M_K, _______, _______, _______, _______, _______, _______, _______,          _______, _______, \
         _______, _______, _______,                            _______,                            _______, _______, _______, _______, _______  \
     ),
-    [_LOCK] = LAYOUT(
-        XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, TD(TD_UNLK), \
-        XXXXXXX, RGB_SPD, RGB_VAI, RGB_SPI, RGB_HUI, RGB_SAI, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, \
+    [_LED_ONLY] = LAYOUT(
+        XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, KC_NO, \
+        XXXXXXX, RGB_SPD, RGB_VAI, RGB_SPI, RGB_HUI, RGB_SAI, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, KC_LEAD, XXXXXXX, \
         XXXXXXX, RGB_RMOD,RGB_VAD, RGB_MOD, RGB_HUD, RGB_SAD, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,          XXXXXXX, XXXXXXX, \
         XXXXXXX, RGB_M_B, RGB_TOG, RGB_M_SW,RGB_M_K, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,          XXXXXXX, XXXXXXX, \
+        XXXXXXX, XXXXXXX, XXXXXXX,                            XXXXXXX,                            XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX  \
+    ),
+    [_LOCK] = LAYOUT(
+        XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, KC_NO, \
+        XXXXXXX, XXXXXXX,   KC_NO, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,   KC_NO, XXXXXXX, XXXXXXX, KC_LEAD, XXXXXXX, \
+        XXXXXXX, XXXXXXX ,XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,   KC_NO, XXXXXXX, XXXXXXX, XXXXXXX,          XXXXXXX, XXXXXXX, \
+        XXXXXXX, XXXXXXX ,XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,          XXXXXXX, XXXXXXX, \
+        XXXXXXX, XXXXXXX, XXXXXXX,                            XXXXXXX,                            XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX  \
+    ),
+    [_SYS] = LAYOUT(
+        XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, KC_DRS1, \
+        XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, KC_DRS2, \
+       TG(_SYS), XXXXXXX ,XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,          XXXXXXX, KC_DRS, \
+        XXXXXXX, XXXXXXX ,XXXXXXX, XXXXXXX, XXXXXXX, MD_BOOT, TG_NKRO, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,          XXXXXXX, XXXXXXX, \
         XXXXXXX, XXXXXXX, XXXXXXX,                            XXXXXXX,                            XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX  \
     ),
     /*
@@ -99,16 +125,29 @@ void ctlaltdel_up (qk_tap_dance_state_t *state, void *user_data) {
 }
 
 qk_tap_dance_action_t tap_dance_actions[] = {
-      [TD_UNLK] = ACTION_TAP_DANCE_DUAL_ROLE(XXXXXXX, _BASE),
-      [TD_CAD]  = ACTION_TAP_DANCE_FN_ADVANCED(NULL, ctlaltdel_down, ctlaltdel_up)
+      /* [TD_UNLK] = ACTION_TAP_DANCE_DUAL_ROLE(XXXXXXX, _BASE), */
+      /* [TD_LOCK]  = ACTION_TAP_DANCE_FN_ADVANCED(NULL, ctlaltdel_down, ctlaltdel_up), */
+/*       [TD_CAD]  = ACTION_TAP_DANCE_FN_ADVANCED(NULL, ctlaltdel_down, ctlaltdel_up) */
 };
+
 
 // Runs just one time when the keyboard initializes.
 void matrix_init_user(void) {
 };
 
+LEADER_EXTERNS();
+
 // Runs constantly in the background, in a loop.
 void matrix_scan_user(void) {
+      LEADER_DICTIONARY() {
+          leading = false;
+          leader_end();
+
+          SEQ_THREE_KEYS(KC_NO, KC_NO, KC_NO) {
+              layer_off(_LOCK);
+          }
+
+      }
 };
 
 #define MODS_SHIFT  (get_mods() & MOD_BIT(KC_LSHIFT) || get_mods() & MOD_BIT(KC_RSHIFT))
@@ -117,6 +156,11 @@ void matrix_scan_user(void) {
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     static uint32_t key_timer;
+
+
+    if (!process_record_dynamic_macro(keycode, record)) {
+        return false;
+    }
 
     switch (keycode) {
         case U_T_AUTO:
