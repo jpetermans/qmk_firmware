@@ -1,5 +1,16 @@
 #include QMK_KEYBOARD_H
 
+//define led display settings, values for led_mode_global
+//using bit flags
+#define LED_ALL 0x00 //should match rgb_matrix_types.h
+#define LED_MODS 0x01 //should match rgb_matrix_types.h
+#define LED_UNDERGLOW 0x02 //should match rgb_matrix_types.h
+#define LED_KEYS 0x04 //should match rgb_matrix_types.h
+#define LED_UNDERGLOW_SINGLE 0x08
+#define LED_KEYS_SINGLE 0x10
+#define LED_KEYS_ACTIVE 0x20
+
+
 enum alt_keycodes {
     U_T_AUTO = SAFE_RANGE, //USB Extra Port Toggle Auto Detect / Always Active
     U_T_AGCR,              //USB Toggle Automatic GCR control
@@ -19,6 +30,16 @@ enum alt_keycodes {
     DYNAMIC_MACRO_RANGE,    //Dynamic macros
 };
 
+//must be after DYNAMIC_MACRO_RANGE is set
+#include "dynamic_macro.h"
+#define KC_DRS1 DYN_REC_START1
+#define KC_DRS2 DYN_REC_START2
+#define KC_DMP1 DYN_MACRO_PLAY1
+#define KC_DMP2 DYN_MACRO_PLAY2
+#define KC_DRS  DYN_REC_STOP
+#define TG_NKRO MAGIC_TOGGLE_NKRO //Toggle 6KRO / NKRO mode
+
+
 enum tap_keys {
     TD_CAD,
     TD_LOCK,
@@ -27,24 +48,6 @@ enum tap_keys {
     TD_DKL,
     TD_DKR,
 };
-
-//define led display settings, values for led_mode_global
-//using bit flags
-#define LED_ALL 0x00 //should match rgb_matrix_types.h
-#define LED_MODS 0x01 //should match rgb_matrix_types.h
-#define LED_UNDERGLOW 0x02 //should match rgb_matrix_types.h
-#define LED_KEYS 0x04 //should match rgb_matrix_types.h
-#define LED_UNDERGLOW_SINGLE 0x08
-#define LED_KEYS_SINGLE 0x10
-#define LED_KEYS_ACTIVE 0x20
-
-#include "dynamic_macro.h"
-#define KC_DRS1 DYN_REC_START1
-#define KC_DRS2 DYN_REC_START2
-#define KC_DMP1 DYN_MACRO_PLAY1
-#define KC_DMP2 DYN_MACRO_PLAY2
-#define KC_DRS  DYN_REC_STOP
-#define TG_NKRO MAGIC_TOGGLE_NKRO //Toggle 6KRO / NKRO mode
 
 enum alt_layers {
     _BASE,
@@ -156,12 +159,6 @@ qk_tap_dance_action_t tap_dance_actions[] = {
       [TD_DKL] = ACTION_TAP_DANCE_DOUBLE(KC_LALT, LCTL(LGUI(KC_LEFT)))
 };
 
-
-// Runs just one time when the keyboard initializes.
-void matrix_init_user(void) {
-    rgblight_mode(RGB_MATRIX_TYPING_HEATMAP);
-    rgb_matrix_layer_helper(RGB_WHITE, 69, LED_UNDERGLOW_SINGLE);
-};
 
 
 // Runs constantly in the background, in a loop.
@@ -296,24 +293,32 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
 }
 
 
-//TODO: test if this RGB_MATRIX_NONE even works
+//TODO: turn off leds on usb suspend
+void suspend_power_down_user(void) {
+    rgb_matrix_set_suspend_state(true);
+}
+void suspend_wakeup_init_user(void) {
+    rgb_matrix_set_suspend_state(false);
+}
+
 void matrix_init_keymap(void) {
-      /* rgblight_mode(RGB_MATRIX_NONE); */
 }
 
 
+//these probably go away once PR(#5811) merged
+extern rgb_config_t rgb_matrix_config;
+extern led_config_t g_led_config;
+
 // from drashna's ergodox keymap.c, sets full set of leds rather than individual
+// also from keyboards/dztech/dz40rgb/keymaps/default/keymap.c for new rgb structure from PR(#5783)
 // added new parameter to filter effect by LED_FLAG_
 void rgb_matrix_layer_helper (uint8_t red, uint8_t green, uint8_t blue, int led_index[2], uint8_t led_flag) {
-    rgb_led led;
-
     switch (led_flag) {
         case LED_ALL:
         case LED_UNDERGLOW:
         case LED_KEYS:
             for (int i = 0; i < DRIVER_LED_TOTAL; i++) {
-                led = g_rgb_leds[i];
-                if (HAS_FLAGS(led.flags, led_flag)) {
+                if (HAS_FLAGS(g_led_config.flags[i], led_flag)) {
                     rgb_matrix_set_color( i, red, green, blue );
                 }
             }
@@ -375,3 +380,14 @@ void rgb_matrix_indicators_user(void) {
             rgb_matrix_layer_helper(RGB_CORAL, arr_ledindex, led_mode_global);
     }
 }
+
+// Runs just one time when the keyboard initializes.
+void matrix_init_user(void) {
+    //TODO: setting heatmap sets permanent underglow until mode is changed.
+    //      Underglow continues to not update with rgb_matrix_indicators_user
+    /* rgb_matrix_config.mode = RGB_MATRIX_TYPING_HEATMAP; */
+    rgblight_mode(RGB_MATRIX_TYPING_HEATMAP);
+    /* arr_ledindex[0] = 69; */
+    /* rgb_matrix_layer_helper(RGB_WHITE, arr_ledindex, LED_UNDERGLOW_SINGLE); */
+};
+

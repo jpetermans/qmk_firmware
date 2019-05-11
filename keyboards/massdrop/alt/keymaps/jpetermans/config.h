@@ -1,4 +1,4 @@
-#pragma once
+#pragma once 
 
 //overrides
 #undef TAPPING_TOGGLE
@@ -7,4 +7,8 @@
 #define LEADER_TIMEOUT 300
 #define LEADER_PER_KEY_TIMING
 #define RGB_MATRIX_KEYPRESSES
-//#define USB_LED_NUM_LOCK_SCANCODE 7 //KC_7
+#define RGB_MATRIX_FRAMEBUFFER_EFFECTS
+/* #define DISABLE_RGB_MATRIX_DIGITAL_RAIN //broken until PR(#5811) merges */
+
+#undef RGBLED_NUM
+#define  RGBLED_NUM 7
