@@ -337,57 +337,57 @@ void rgb_matrix_layer_helper (uint8_t red, uint8_t green, uint8_t blue, int led_
 
 //TODO: adjust hsv.val of layer indicators
 //TODO: if RGB_TOG is off then this does not update (flush only?)
-//TODO: how often does this run?
+uint32_t prior_layer;
 void rgb_matrix_indicators_user(void) {
     //read global setting for all, keys, underglow, underglow indicator or key indicator and set led_mode_global
-    //TODO: text if leds toggled on? and don't run if off
-    switch (biton32(layer_state)) {
-        case _BASE:
-            arr_ledindex [0] = 69; // led_gsk
-            arr_ledindex [1] = 1;// led_ksk
-            rgb_matrix_layer_helper(RGB_WHITE, arr_ledindex, led_mode_global);
-            break;
+    if (prior_layer != layer_state) {
+        prior_layer = layer_state;
+        rgb_matrix_layer_helper(0X00, 0x00, 0x00, arr_ledindex, LED_UNDERGLOW); // reset underglow for heatmap and digital rain effects
 
-        case _NUMPAD:
-            arr_ledindex [0] = 69; // led_gsk
-            arr_ledindex [1] = 3; // led_ksk
-            rgb_matrix_layer_helper(RGB_GREEN, arr_ledindex, led_mode_global);
-            break;
+        switch (biton32(layer_state)) {
+            case _BASE:
+                arr_ledindex [0] = 69; // led_gsk
+                arr_ledindex [1] = 1;// led_ksk
+                rgb_matrix_layer_helper(RGB_WHITE, arr_ledindex, led_mode_global);
+                break;
 
-        case _FNAV:
-            arr_ledindex [0] = 70; // led_gsk
-            arr_ledindex [1] = 2; // led_ksk
-            rgb_matrix_layer_helper(RGB_BLUE, arr_ledindex, led_mode_global);
-            break;
+            case _NUMPAD:
+                arr_ledindex [0] = 69; // led_gsk
+                arr_ledindex [1] = 3; // led_ksk
+                rgb_matrix_layer_helper(RGB_GREEN, arr_ledindex, led_mode_global);
+                break;
 
-        case _LOCK:
-        case _UNLOCK:
-            arr_ledindex [0] = 69; // led_gsk
-            arr_ledindex [1] = 14;// led_ksk
-            rgb_matrix_layer_helper(RGB_RED, arr_ledindex, led_mode_global);
-            break;
-        /* case _UNLOCK: */
+            case _FNAV:
+                arr_ledindex [0] = 70; // led_gsk
+                arr_ledindex [1] = 2; // led_ksk
+                rgb_matrix_layer_helper(RGB_BLUE, arr_ledindex, led_mode_global);
+                break;
 
-        case _LED:
-            arr_ledindex [0] = 69; // led_gsk
-            arr_ledindex [1] = 4; // led_ksk
-            rgb_matrix_layer_helper(RGB_GOLD, arr_ledindex, led_mode_global);
-            break;
+            case _LOCK:
+            case _UNLOCK:
+                arr_ledindex [0] = 69; // led_gsk
+                arr_ledindex [1] = 14;// led_ksk
+                rgb_matrix_layer_helper(RGB_RED, arr_ledindex, led_mode_global);
+                break;
+            /* case _UNLOCK: */
 
-        case _SYS:
-            arr_ledindex [0] = 69; // led_gsk
-            arr_ledindex [1] = 5; // led_ksk
-            rgb_matrix_layer_helper(RGB_CORAL, arr_ledindex, led_mode_global);
+            case _LED:
+                arr_ledindex [0] = 69; // led_gsk
+                arr_ledindex [1] = 4; // led_ksk
+                rgb_matrix_layer_helper(RGB_GOLD, arr_ledindex, led_mode_global);
+                break;
+
+            case _SYS:
+                arr_ledindex [0] = 69; // led_gsk
+                arr_ledindex [1] = 5; // led_ksk
+                rgb_matrix_layer_helper(RGB_CORAL, arr_ledindex, led_mode_global);
+        }
     }
 }
 
 // Runs just one time when the keyboard initializes.
 void matrix_init_user(void) {
-    //TODO: setting heatmap sets permanent underglow until mode is changed.
-    //      Underglow continues to not update with rgb_matrix_indicators_user
     /* rgb_matrix_config.mode = RGB_MATRIX_TYPING_HEATMAP; */
     rgblight_mode(RGB_MATRIX_TYPING_HEATMAP);
-    /* arr_ledindex[0] = 69; */
-    /* rgb_matrix_layer_helper(RGB_WHITE, arr_ledindex, LED_UNDERGLOW_SINGLE); */
 };
 
