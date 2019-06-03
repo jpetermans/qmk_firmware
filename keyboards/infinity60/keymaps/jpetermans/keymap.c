@@ -1,4 +1,4 @@
-#include "infinity60.h"
+#include QMK_KEYBOARD_H
 #include "led_controller.h"
 
 //Helpful Defines
@@ -11,36 +11,34 @@
 #define _MEDIA 3
 #define _TILDE 4
 
-/*
-//Shorten dynamic macro names
-#define DMPLAY1 DYN_MACRO_PLAY1
-#define DMPLAY2 DYN_MACRO_PLAY2
-#define DMREC1 DYN_REC_START1
-#define DMREC2 DYN_REC_START2
-#define DMSTOP DYN_REC_STOP
-*/
-
 //IS31 chip has 8 available led pages, using 0 for all leds and 7 for single toggles
 #define max_pages 6
 
 enum ic60_keycodes {
-  NUMPAD,
-  FNAV,
-  MEDIA,
-  TILDE,
-  CTLALTDEL,
-  BACKLIGHT,
-  BRIGHT,
-  DIM,
-  ALL,
-  GAME,
-  MODE_SINGLE,
-  MODE_PAGE,
-  MODE_FLASH
-//DYNAMIC_MACRO_RANGE
+    NUMPAD,
+    FNAV,
+    MEDIA,
+    TILDE,
+    CTLALTDEL,
+    BACKLIGHT,
+    BRIGHT,
+    DIM,
+    ALL,
+    GAME,
+    MODE_SINGLE,
+    MODE_PAGE,
+    MODE_FLASH,
+    DYNAMIC_MACRO_RANGE,
 };
 
-//#include "dynamic_macro.h"
+//must be after DYNAMIC_MACRO_RANGE is set¬
+#include "dynamic_macro.h"
+#define KC_DRS1 DYN_REC_START1
+#define KC_DRS2 DYN_REC_START2
+#define KC_DMP1 DYN_MACRO_PLAY1
+#define KC_DMP2 DYN_MACRO_PLAY2
+#define KC_DRS  DYN_REC_STOP
+
 
 uint8_t current_layer_global = 0;
 uint8_t led_mode_global = MODE_SINGLE;
@@ -66,56 +64,56 @@ const uint16_t keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
      * `-----------------------------------------------------------'
      */
     /* default */
-    [_BASE] = KEYMAP( \
-        KC_ESC,    KC_1,   KC_2,   KC_3,   KC_4,   KC_5,   KC_6,   KC_7,   KC_8,   KC_9,   KC_0,   KC_MINS,KC_EQL, KC_BSLS,KC_NO,\
-        KC_TAB,    KC_Q,   KC_W,   KC_E,   KC_R,   KC_T,   KC_Y,   KC_U,   KC_I,   KC_O,   KC_P,   KC_LBRC,KC_RBRC,KC_BSPC,   \
-        TT(_FNAV), KC_A,   KC_S,   KC_D,   KC_F,   KC_G,   KC_H,   KC_J,   KC_K,   KC_L,   KC_SCLN,KC_QUOT,KC_ENT,         \
-        KC_LSFT,   KC_Z,   KC_X,   KC_C,   KC_V,   KC_B,   KC_N,   KC_M,   KC_COMM,KC_DOT, KC_SLSH,F(TILDE),KC_NO,          \
-        KC_LCTL,   KC_LGUI,KC_LALT,            LT(_FNAV, KC_SPC),       KC_RALT,TG(_NUMPAD),MO(_MEDIA), KC_RCTL         \
+    [_BASE] = LAYOUT_60_ansi_split_bs_rshift(
+        KC_ESC,    KC_1,   KC_2,   KC_3,   KC_4,   KC_5,   KC_6,   KC_7,   KC_8,   KC_9,   KC_0,   KC_MINS,KC_EQL, KC_BSLS,KC_NO,
+        KC_TAB,    KC_Q,   KC_W,   KC_E,   KC_R,   KC_T,   KC_Y,   KC_U,   KC_I,   KC_O,   KC_P,   KC_LBRC,KC_RBRC,KC_BSPC,
+        TT(_FNAV), KC_A,   KC_S,   KC_D,   KC_F,   KC_G,   KC_H,   KC_J,   KC_K,   KC_L,   KC_SCLN,KC_QUOT,KC_ENT,
+        KC_LSFT,   KC_Z,   KC_X,   KC_C,   KC_V,   KC_B,   KC_N,   KC_M,   KC_COMM,KC_DOT, KC_SLSH,F(TILDE),KC_NO,
+        KC_LCTL,   KC_LGUI,KC_LALT,            LT(_FNAV, KC_SPC),       KC_RALT,TG(_NUMPAD),MO(_MEDIA), KC_RCTL
     ),
 
     /* numpad */
-    [_NUMPAD] = KEYMAP( \
-        _______,_______,_______,_______,_______,_______,_______, KC_P7, KC_P8, KC_P9, KC_PSLS, _______,_______,_______,KC_NO,\
-        _______,_______,_______,_______,_______,_______,_______, KC_P4, KC_P5, KC_P6, KC_PAST, _______,_______,_______, \
-        MO(_FNAV),_______,_______,_______,_______,_______,_______, KC_P1, KC_P2, KC_P3, KC_PMNS, _______,_______,      \
-        _______,_______,_______,_______,_______,_______,_______, KC_P0,KC_COMM,KC_PDOT,KC_PPLS, _______,KC_NO,      \
-        _______,_______,_______,               TO(_BASE),           _______,_______,_______,_______   \
+    [_NUMPAD] = LAYOUT_60_ansi_split_bs_rshift(
+        _______,XXXXXXX,XXXXXXX,XXXXXXX,XXXXXXX,XXXXXXX,XXXXXXX,KC_NLCK,XXXXXXX, KC_PSLS,KC_PAST, KC_PMNS,_______,_______,KC_NO,
+        _______,XXXXXXX,XXXXXXX,XXXXXXX,XXXXXXX,XXXXXXX,XXXXXXX,   KC_P7, KC_P8, KC_P9,  KC_PPLS, _______,_______,_______,
+        MO(_FNAV),XXXXXXX,XXXXXXX,XXXXXXX,XXXXXXX,XXXXXXX,XXXXXXX, KC_P4, KC_P5, KC_P6,  KC_DOT, XXXXXXX,_______,
+        _______,XXXXXXX,XXXXXXX,XXXXXXX,XXXXXXX,XXXXXXX,XXXXXXX,   KC_P1, KC_P2, KC_P3,  KC_PSLS, _______,KC_NO,
+        _______,_______,_______,                  KC_P0,           _______,_______,_______,_______
     ),
 
     /* F-, arrow, and media keys */
-    [_FNAV] = KEYMAP( \
-        KC_GRV, KC_F1,  KC_F2,  KC_F3,  KC_F4,  KC_F5,  KC_F6,  KC_F7,  KC_F8,  KC_F9,  KC_F10, KC_F11, KC_F12, _______,KC_NO,\
-        KC_CAPS,_______,_______,_______,_______,_______,_______,KC_PGUP,KC_UP,KC_PGDN,KC_PSCR,_______,_______,KC_DEL,  \
-        _______,_______,KC_BTN2,_______,_______,_______,KC_HOME,KC_LEFT,KC_DOWN,KC_RGHT,KC_INS,_______,_______,     \
-        _______,KC_APP, KC_BTN1,KC_CALC,_______,_______,KC_END,_______,_______,_______,_______,_______,KC_NO,         \
-        _______,_______,_______,               _______,         F(CTLALTDEL),KC_NLCK,_______,_______   \
+    [_FNAV] = LAYOUT_60_ansi_split_bs_rshift(
+        KC_GRV, KC_F1,  KC_F2,  KC_F3,  KC_F4,  KC_F5,  KC_F6,  KC_F7,  KC_F8,  KC_F9,  KC_F10, KC_F11, KC_F12, _______,KC_NO,
+        KC_CAPS,KC_DMP2,_______,_______,_______,_______,_______,KC_PGUP,KC_UP,KC_PGDN,KC_PSCR,_______,_______,KC_DEL,
+        _______,KC_DMP1,KC_BTN2,_______,_______,_______,KC_HOME,KC_LEFT,KC_DOWN,KC_RGHT,KC_INS,_______,_______,
+        _______,KC_APP, KC_BTN1,KC_CALC,_______,_______,KC_END,_______,_______,_______,_______,_______,KC_NO,
+        _______,_______,_______,               _______,         F(CTLALTDEL),KC_NLCK,_______,_______
     ),
 
     /* media */
-    [_MEDIA] = KEYMAP( \
-        _______,F(MODE_SINGLE),F(MODE_PAGE),F(MODE_FLASH),_______,_______,_______, _______, _______, _______,KC_MUTE, KC_VOLD, KC_VOLU,_______,KC_NO,\
-        _______,_______,_______,_______,_______,_______,_______, _______, _______, _______,_______, _______,_______,_______,\
-        _______,_______,_______,_______,_______,F(GAME),_______, _______, _______, _______,_______, _______,_______,     \
-        _______,_______,F(ALL) ,F(BRIGHT),F(DIM),F(BACKLIGHT),_______, _______, KC_MPRV, KC_MNXT,KC_MSTP, _______,KC_NO,       \
-        _______,_______,_______,               KC_MPLY,             _______,_______, _______,_______      \
+    [_MEDIA] = LAYOUT_60_ansi_split_bs_rshift(
+        _______,F(MODE_SINGLE),F(MODE_PAGE),F(MODE_FLASH),_______,_______,_______, _______, _______, _______,KC_MUTE, KC_VOLD, KC_VOLU,_______,KC_NO,
+        _______,KC_DRS2,_______,_______,_______,_______,_______, _______, _______, _______,_______, _______,_______,_______,
+        _______,KC_DRS1,_______,_______,_______,F(GAME),_______, _______, _______, _______,_______, _______,_______,
+        _______,KC_DRS,F(ALL) ,F(BRIGHT),F(DIM),F(BACKLIGHT),_______, _______, KC_MPRV, KC_MNXT,KC_MSTP, _______,KC_NO,
+        _______,_______,_______,               KC_MPLY,             _______,_______, _______,_______
     ),
     /* ~ */
-    [_TILDE] = KEYMAP( \
-        KC_GRV,_______,_______,_______,_______,_______,_______, _______, _______, _______,_______, _______,_______,_______,KC_NO,\
-        _______,_______,_______,_______,_______,_______,_______, _______, _______, _______,_______, _______,_______,_______,\
-        _______,_______,_______,_______,_______,_______,_______, _______, _______, _______,_______, _______,_______,     \
-        _______,_______,_______,_______,_______,_______,_______, _______, _______, _______,_______, _______,KC_NO,       \
-        _______,_______,_______,               _______,             _______,_______, _______,_______      \
+    [_TILDE] = LAYOUT_60_ansi_split_bs_rshift( 
+        KC_GRV,_______,_______,_______,_______,_______,_______, _______, _______, _______,_______, _______,_______,_______,KC_NO,
+        _______,_______,_______,_______,_______,_______,_______, _______, _______, _______,_______, _______,_______,_______,
+        _______,_______,_______,_______,_______,_______,_______, _______, _______, _______,_______, _______,_______,
+        _______,_______,_______,_______,_______,_______,_______, _______, _______, _______,_______, _______,KC_NO,
+        _______,_______,_______,               _______,             _______,_______, _______,_______
     ),
     /* template */
-    [5] = KEYMAP( \
-        _______,_______,_______,_______,_______,_______,_______, _______, _______, _______,_______, _______,_______,_______,KC_NO,\
-        _______,_______,_______,_______,_______,_______,_______, _______, _______, _______,_______, _______,_______,_______,\
-        _______,_______,_______,_______,_______,_______,_______, _______, _______, _______,_______, _______,_______,     \
-        _______,_______,_______,_______,_______,_______,_______, _______, _______, _______,_______, _______,KC_NO,       \
-        _______,_______,_______,               _______,             _______,_______, _______,_______      \
-    ),
+    /* [5] = LAYOUT_60_ansi_split_bs_rshift(*/
+    /*     _______,_______,_______,_______,_______,_______,_______, _______, _______, _______,_______, _______,_______,_______,KC_NO, */
+    /*     _______,_______,_______,_______,_______,_______,_______, _______, _______, _______,_______, _______,_______,_______,*/
+    /*     _______,_______,_______,_______,_______,_______,_______, _______, _______, _______,_______, _______,_______,*/
+    /*     _______,_______,_______,_______,_______,_______,_______, _______, _______, _______,_______, _______,KC_NO,*/
+    /*     _______,_______,_______,               _______,             _______,_______, _______,_______*/
+    /* ), */
 };
 
 //id for user defined functions and macros
