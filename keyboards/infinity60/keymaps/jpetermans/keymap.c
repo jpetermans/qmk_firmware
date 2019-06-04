@@ -14,20 +14,34 @@
 //IS31 chip has 8 available led pages, using 0 for all leds and 7 for single toggles
 #define max_pages 6
 
+enum tap_keys {
+    TD_CAD,
+    TD_LDR,
+    TD_F4,
+    TD_DKL,
+    TD_DKR,
+};
+
+enum ic60_led_modes {
+    MODE_SINGLE,
+    MODE_PAGE,
+    MODE_FLASH,
+};
+
 enum ic60_keycodes {
     NUMPAD,
     FNAV,
     MEDIA,
     TILDE,
     CTLALTDEL,
-    BACKLIGHT,
+    BACKLT,
     BRIGHT,
     DIM,
     ALL,
     GAME,
-    MODE_SINGLE,
-    MODE_PAGE,
-    MODE_FLASH,
+    LED_SK,
+    LED_PG,
+    LED_FLSH,
     DYNAMIC_MACRO_RANGE,
 };
 
@@ -44,6 +58,11 @@ uint8_t current_layer_global = 0;
 uint8_t led_mode_global = MODE_SINGLE;
 uint8_t backlight_status_global = 1; //init on/off state of backlight
 uint32_t led_layer_state = 0;
+
+// leader key
+LEADER_EXTERNS();
+bool leader_success;
+bool leader_unlock;
 
 /* ==================================
  *             KEYMAPS
@@ -65,66 +84,47 @@ const uint16_t keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
      */
     /* default */
     [_BASE] = LAYOUT_60_ansi_split_bs_rshift(
-        KC_ESC,    KC_1,   KC_2,   KC_3,   KC_4,   KC_5,   KC_6,   KC_7,   KC_8,   KC_9,   KC_0,   KC_MINS,KC_EQL, KC_BSLS,KC_NO,
+        KC_GESC,   KC_1,   KC_2,   KC_3,   KC_4,   KC_5,   KC_6,   KC_7,   KC_8,   KC_9,   KC_0,   KC_MINS,KC_EQL, TD(TD_LDR),KC_NO,
         KC_TAB,    KC_Q,   KC_W,   KC_E,   KC_R,   KC_T,   KC_Y,   KC_U,   KC_I,   KC_O,   KC_P,   KC_LBRC,KC_RBRC,KC_BSPC,
         TT(_FNAV), KC_A,   KC_S,   KC_D,   KC_F,   KC_G,   KC_H,   KC_J,   KC_K,   KC_L,   KC_SCLN,KC_QUOT,KC_ENT,
-        KC_LSFT,   KC_Z,   KC_X,   KC_C,   KC_V,   KC_B,   KC_N,   KC_M,   KC_COMM,KC_DOT, KC_SLSH,F(TILDE),KC_NO,
-        KC_LCTL,   KC_LGUI,KC_LALT,            LT(_FNAV, KC_SPC),       KC_RALT,TG(_NUMPAD),MO(_MEDIA), KC_RCTL
+        KC_LSFT,   KC_Z,   KC_X,   KC_C,   KC_V,   KC_B,   KC_N,   KC_M,   KC_COMM,KC_DOT, KC_SLSH, TILDE,KC_NO,
+        KC_LCTL,   KC_LGUI,TD(TD_DKL),            LT(_FNAV, KC_SPC),       TD(TD_DKR),TG(_NUMPAD),MO(_MEDIA), KC_RCTL
     ),
 
     /* numpad */
     [_NUMPAD] = LAYOUT_60_ansi_split_bs_rshift(
-        _______,XXXXXXX,XXXXXXX,XXXXXXX,XXXXXXX,XXXXXXX,XXXXXXX,KC_NLCK,XXXXXXX, KC_PSLS,KC_PAST, KC_PMNS,_______,_______,KC_NO,
-        _______,XXXXXXX,XXXXXXX,XXXXXXX,XXXXXXX,XXXXXXX,XXXXXXX,   KC_P7, KC_P8, KC_P9,  KC_PPLS, _______,_______,_______,
-        MO(_FNAV),XXXXXXX,XXXXXXX,XXXXXXX,XXXXXXX,XXXXXXX,XXXXXXX, KC_P4, KC_P5, KC_P6,  KC_DOT, XXXXXXX,_______,
-        _______,XXXXXXX,XXXXXXX,XXXXXXX,XXXXXXX,XXXXXXX,XXXXXXX,   KC_P1, KC_P2, KC_P3,  KC_PSLS, _______,KC_NO,
-        _______,_______,_______,                  KC_P0,           _______,_______,_______,_______
+        _______,XXXXXXX,XXXXXXX,XXXXXXX,XXXXXXX,XXXXXXX,XXXXXXX,KC_NLCK, KC_PSLS,KC_PAST,KC_PMNS,_______,_______,_______,KC_NO,
+        _______,XXXXXXX,KC_MS_U,XXXXXXX,XXXXXXX,XXXXXXX,XXXXXXX,   KC_P7, KC_P8, KC_P9,  KC_PPLS, _______,_______,_______,
+        MO(_FNAV),KC_MS_L,KC_MS_D,KC_MS_R,XXXXXXX,XXXXXXX,XXXXXXX, KC_P4, KC_P5, KC_P6,  _______, _______,_______,
+        _______,XXXXXXX,XXXXXXX,XXXXXXX,XXXXXXX,XXXXXXX,XXXXXXX,   KC_P1, KC_P2, KC_P3,  _______, _______,KC_NO,
+        _______,_______,_______,                  KC_P0,                         KC_DOT,_______,_______,_______
     ),
 
     /* F-, arrow, and media keys */
     [_FNAV] = LAYOUT_60_ansi_split_bs_rshift(
         KC_GRV, KC_F1,  KC_F2,  KC_F3,  KC_F4,  KC_F5,  KC_F6,  KC_F7,  KC_F8,  KC_F9,  KC_F10, KC_F11, KC_F12, _______,KC_NO,
         KC_CAPS,KC_DMP2,_______,_______,_______,_______,_______,KC_PGUP,KC_UP,KC_PGDN,KC_PSCR,_______,_______,KC_DEL,
-        _______,KC_DMP1,KC_BTN2,_______,_______,_______,KC_HOME,KC_LEFT,KC_DOWN,KC_RGHT,KC_INS,_______,_______,
-        _______,KC_APP, KC_BTN1,KC_CALC,_______,_______,KC_END,_______,_______,_______,_______,_______,KC_NO,
-        _______,_______,_______,               _______,         F(CTLALTDEL),KC_NLCK,_______,_______
+        _______,KC_DMP1,KC_BTN2,KC_BTN1,_______,_______,KC_HOME,KC_LEFT,KC_DOWN,KC_RGHT,KC_INS,_______,_______,
+        _______,KC_APP, _______,KC_CALC,_______,_______,KC_END,_______,_______,_______,_______,_______,KC_NO,
+        _______,_______,_______,               _______,           CTLALTDEL,KC_NLCK,_______,_______
     ),
 
     /* media */
     [_MEDIA] = LAYOUT_60_ansi_split_bs_rshift(
-        _______,F(MODE_SINGLE),F(MODE_PAGE),F(MODE_FLASH),_______,_______,_______, _______, _______, _______,KC_MUTE, KC_VOLD, KC_VOLU,_______,KC_NO,
+        _______, LED_SK,LED_PG,LED_FLSH,_______,_______,_______, _______, _______, _______,KC_MUTE, KC_VOLD, KC_VOLU,_______,KC_NO,
         _______,KC_DRS2,_______,_______,_______,_______,_______, _______, _______, _______,_______, _______,_______,_______,
-        _______,KC_DRS1,_______,_______,_______,F(GAME),_______, _______, _______, _______,_______, _______,_______,
-        _______,KC_DRS,F(ALL) ,F(BRIGHT),F(DIM),F(BACKLIGHT),_______, _______, KC_MPRV, KC_MNXT,KC_MSTP, _______,KC_NO,
-        _______,_______,_______,               KC_MPLY,             _______,_______, _______,_______
-    ),
-    /* ~ */
-    [_TILDE] = LAYOUT_60_ansi_split_bs_rshift( 
-        KC_GRV,_______,_______,_______,_______,_______,_______, _______, _______, _______,_______, _______,_______,_______,KC_NO,
-        _______,_______,_______,_______,_______,_______,_______, _______, _______, _______,_______, _______,_______,_______,
-        _______,_______,_______,_______,_______,_______,_______, _______, _______, _______,_______, _______,_______,
-        _______,_______,_______,_______,_______,_______,_______, _______, _______, _______,_______, _______,KC_NO,
-        _______,_______,_______,               _______,             _______,_______, _______,_______
+        _______,KC_DRS1,_______,_______,_______,   GAME,_______, _______, _______, _______,_______, _______,_______,
+        _______,KC_DRS,     ALL, BRIGHT,    DIM, BACKLT,_______, _______, KC_MPRV, KC_MNXT,KC_MSTP, _______,KC_NO,
+        _______,_______,_______,                KC_MPLY,             _______,_______, _______,_______
     ),
     /* template */
-    /* [5] = LAYOUT_60_ansi_split_bs_rshift(*/
+    /* [4] = LAYOUT_60_ansi_split_bs_rshift(*/
     /*     _______,_______,_______,_______,_______,_______,_______, _______, _______, _______,_______, _______,_______,_______,KC_NO, */
     /*     _______,_______,_______,_______,_______,_______,_______, _______, _______, _______,_______, _______,_______,_______,*/
     /*     _______,_______,_______,_______,_______,_______,_______, _______, _______, _______,_______, _______,_______,*/
     /*     _______,_______,_______,_______,_______,_______,_______, _______, _______, _______,_______, _______,KC_NO,*/
     /*     _______,_______,_______,               _______,             _______,_______, _______,_______*/
     /* ), */
-};
-
-enum macro_id {
-    ACTION_LEDS_ALL,
-    ACTION_LEDS_GAME,
-    ACTION_LEDS_BACKLIGHT,
-    ACTION_LEDS_BRIGHT,
-    ACTION_LEDS_DIM,
-    ACTION_LEDS_SINGLE,
-    ACTION_LEDS_PAGE,
-    ACTION_LEDS_FLASH
 };
 
 /* ==================================
@@ -172,90 +172,71 @@ uint8_t led_game[5] = {
 };
 
 //======== qmk functions =========
-const uint16_t fn_actions[] = {
-    [CTLALTDEL] = ACTION_KEY(LALT(LCTL(KC_DEL))),
-    [TILDE] = ACTION_LAYER_MODS(_TILDE, MOD_LSFT),
-    [ALL] = ACTION_FUNCTION(ACTION_LEDS_ALL),
-    [GAME] = ACTION_FUNCTION(ACTION_LEDS_GAME),
-    [BACKLIGHT] = ACTION_FUNCTION(ACTION_LEDS_BACKLIGHT),
-    [BRIGHT] = ACTION_FUNCTION(ACTION_LEDS_BRIGHT),
-    [DIM] = ACTION_FUNCTION(ACTION_LEDS_DIM),
-    [MODE_SINGLE] = ACTION_FUNCTION(ACTION_LEDS_SINGLE),
-    [MODE_PAGE] = ACTION_FUNCTION(ACTION_LEDS_PAGE),
-    [MODE_FLASH] = ACTION_FUNCTION(ACTION_LEDS_FLASH),
-};
+bool process_record_user(uint16_t keycode, keyrecord_t *record) {
+    msg_t msg;
 
-/* custom action function */
-void action_function(keyrecord_t *record, uint8_t id, uint8_t opt) {
-  msg_t msg;
+    if (!process_record_dynamic_macro(keycode, record)) {
+        return false;
+    }
 
-  switch(id) {
-    case ACTION_LEDS_ALL:
-      if(record->event.pressed) {
-        led_mode_global = led_mode_global == ALL ? MODE_SINGLE : ALL;
-        msg=TOGGLE_ALL;
-        chMBPost(&led_mailbox, msg, TIME_IMMEDIATE);
-      }
-      break;
+    switch (keycode) {
+        case ALL:
+          if(record->event.pressed) {
+            led_mode_global = led_mode_global == ALL ? MODE_SINGLE : ALL;
+            msg=TOGGLE_ALL;
+            chMBPost(&led_mailbox, msg, TIME_IMMEDIATE);
+          }
+          return false;
 
-    case ACTION_LEDS_BACKLIGHT:
-      if(record->event.pressed) {
-        backlight_status_global ^= 1;
-        msg=(backlight_status_global << 8) | TOGGLE_BACKLIGHT;
-        chMBPost(&led_mailbox, msg, TIME_IMMEDIATE);
-      }
-      break;
+        case BACKLT:
+          if(record->event.pressed) {
+            backlight_status_global ^= 1;
+            msg=(backlight_status_global << 8) | TOGGLE_BACKLIGHT;
+            chMBPost(&led_mailbox, msg, TIME_IMMEDIATE);
+          }
+          return false;
 
-    case ACTION_LEDS_GAME:
-      if(record->event.pressed) {
-        led_mode_global = led_mode_global == GAME ? MODE_SINGLE : GAME;
+        case GAME:
+          if(record->event.pressed) {
+            led_mode_global = led_mode_global == GAME ? MODE_SINGLE : GAME;
 
-        msg=(4 << 8) | DISPLAY_PAGE;
-        chMBPost(&led_mailbox, msg, TIME_IMMEDIATE);
-      }
-      break;
+            msg=(4 << 8) | DISPLAY_PAGE;
+            chMBPost(&led_mailbox, msg, TIME_IMMEDIATE);
+          }
+          return false;
 
-    case ACTION_LEDS_BRIGHT:
-      if(record->event.pressed) {
-        msg=(1 << 8) | STEP_BRIGHTNESS;
-        chMBPost(&led_mailbox, msg, TIME_IMMEDIATE);
-      }
-      break;
+        case BRIGHT:
+          if(record->event.pressed) {
+            msg=(1 << 8) | STEP_BRIGHTNESS;
+            chMBPost(&led_mailbox, msg, TIME_IMMEDIATE);
+          }
+          return false;
 
-    case ACTION_LEDS_DIM:
-      if(record->event.pressed) {
-        msg=(0 << 8) | STEP_BRIGHTNESS;
-        chMBPost(&led_mailbox, msg, TIME_IMMEDIATE);
-      }
-      break;
+        case DIM:
+          if(record->event.pressed) {
+            msg=(0 << 8) | STEP_BRIGHTNESS;
+            chMBPost(&led_mailbox, msg, TIME_IMMEDIATE);
+          }
+          return false;
 
-    //set led_mode for matrix_scan to toggle leds
-    case ACTION_LEDS_SINGLE:
-      led_mode_global = MODE_SINGLE;
-      break;
-    case ACTION_LEDS_PAGE:
-      led_mode_global = MODE_PAGE;
-      break;
-    case ACTION_LEDS_FLASH:
-      led_mode_global = MODE_FLASH;
-      break;
+        //set led_mode for matrix_scan to toggle leds
+        case LED_SK:
+          led_mode_global = MODE_SINGLE;
+          return false;
+        case LED_PG:
+          led_mode_global = MODE_PAGE;
+          return false;
+        case LED_FLSH:
+          led_mode_global = MODE_FLASH;
+          return false;
 
-  }
-}
-
-const macro_t *action_get_macro(keyrecord_t *record, uint8_t id, uint8_t opt)
-{
-    return MACRO_NONE;
-};
-
-
-bool process_record_user (uint16_t keycode, keyrecord_t *record) {
-  return true;
+        default:
+            return true;
+    }
 }
 
 // Runs just one time when the keyboard initializes.
 void matrix_init_user(void) {
-
     led_controller_init();
 
     // Write predefined led pages.
@@ -272,8 +253,59 @@ void matrix_init_user(void) {
     chThdSleepMilliseconds(1000);
 };
 
+//Tap Dance Definitions
+void ctlaltdel_down (qk_tap_dance_state_t *state, void *user_data) {
+    if (state->count >= 3) {
+        register_code(KC_DEL);
+        register_code(KC_LALT);
+        register_code(KC_LCTL);
+    } else {
+    }
+}
+void ctlaltdel_up (qk_tap_dance_state_t *state, void *user_data) {
+    if (state->count >= 3) {
+        unregister_code(KC_DEL);
+        unregister_code(KC_LALT);
+        unregister_code(KC_LCTL);
+    } else {
+    }
+}
+
+qk_tap_dance_action_t tap_dance_actions[] = {
+      [TD_LDR] = ACTION_TAP_DANCE_DOUBLE(KC_BSLS, KC_LEAD),
+      [TD_F4] = ACTION_TAP_DANCE_DOUBLE(KC_RALT, LALT(KC_F4)),
+      [TD_CAD]  = ACTION_TAP_DANCE_FN_ADVANCED(NULL, ctlaltdel_down, ctlaltdel_up),
+      [TD_DKR] = ACTION_TAP_DANCE_DOUBLE(KC_RALT, LCTL(LGUI(KC_RGHT))),
+      [TD_DKL] = ACTION_TAP_DANCE_DOUBLE(KC_LALT, LCTL(LGUI(KC_LEFT)))
+};
+
 // Loops constantly in the background.
 void matrix_scan_user(void) {
+
+  LEADER_DICTIONARY() {
+      leader_success = leading = false;
+      leader_unlock = false;
+
+      SEQ_TWO_KEYS(KC_W, KC_Q) {
+          SEND_STRING(SS_LALT(SS_TAP(X_F4)));
+          leader_success = true;
+      }
+
+      SEQ_TWO_KEYS(KC_G, KC_M) {
+          SEND_STRING("@gmail.com");
+          leader_unlock = true;
+      }
+
+      SEQ_THREE_KEYS(KC_A, KC_E, KC_W) {
+          SEND_STRING("@");
+          leader_unlock = true;
+      }
+
+      leader_end();
+  }
+}
+
+void led_matrix_indicators_user(void) {
   uint8_t page;
   uint8_t led_pin_byte;
   msg_t msg;
