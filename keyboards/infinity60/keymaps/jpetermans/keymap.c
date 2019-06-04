@@ -116,11 +116,6 @@ const uint16_t keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     /* ), */
 };
 
-//id for user defined functions and macros
-enum function_id {
-    NONE,
-};
-
 enum macro_id {
     ACTION_LEDS_ALL,
     ACTION_LEDS_GAME,
@@ -148,22 +143,25 @@ enum macro_id {
 
 //======== full page arrays =========
 //any change in array size needs to be mirrored in matrix_init_user
-uint8_t led_numpad[16] = {
-  18,21,22,23,
+uint8_t led_numpad[18] = {
+  18,   22,23,24,25,
   37,38,41,42,
   55,56,57,58,
-  72,73,74,75
+  72,73,74,75,
+     83
 };
 //LED Page 2 - _Nav
-uint8_t led_nav[12] = {
-                        38,
+uint8_t led_nav[13] = {
+     31,                  38,
   47,48,              55,56,57,
      64,65,66
 };
 //LED Page 3 - _Media
-uint8_t led_media[15] = {
+uint8_t led_media[19] = {
   12,13,14,           23,24,25,
-     65,66,67,68,    73,74,75,
+     31,
+     47,48,
+     64,65,66,67,68,    73,74,75,
            83,          86
 };
 //LED Page 4 - _Game "WASD"
