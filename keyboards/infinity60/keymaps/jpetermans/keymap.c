@@ -1,9 +1,6 @@
 #include QMK_KEYBOARD_H
 #include "led_controller.h"
 
-//Helpful Defines
-#define _______ KC_TRNS
-
 //Define Layer Names
 #define _BASE 0
 #define _NUMPAD 1
@@ -12,7 +9,7 @@
 #define _TILDE 4
 
 //IS31 chip has 8 available led pages, using 0 for all leds and 7 for single toggles
-#define max_pages 6
+#define MAX_PAGES 6
 
 enum tap_keys {
     TD_CAD,
@@ -23,18 +20,15 @@ enum tap_keys {
 };
 
 enum ic60_led_modes {
+    MODE_ALL,
+    MODE_GAME,
     MODE_SINGLE,
     MODE_PAGE,
     MODE_FLASH,
 };
 
 enum ic60_keycodes {
-    NUMPAD,
-    FNAV,
-    MEDIA,
-    TILDE,
-    CTLALTDEL,
-    BACKLT,
+    BACKLT = SAFE_RANGE,
     BRIGHT,
     DIM,
     ALL,
@@ -54,10 +48,9 @@ enum ic60_keycodes {
 #define KC_DRS  DYN_REC_STOP
 
 
-uint8_t current_layer_global = 0;
+uint32_t led_layer_state = 0; //used to match led layers to the current keymap layer
 uint8_t led_mode_global = MODE_SINGLE;
 uint8_t backlight_status_global = 1; //init on/off state of backlight
-uint32_t led_layer_state = 0;
 
 // leader key
 LEADER_EXTERNS();
@@ -68,27 +61,13 @@ bool leader_unlock;
  *             KEYMAPS
  * ==================================*/
 
-const uint16_t keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
-    /* Layer 0: Default Layer
-     * ,-----------------------------------------------------------.
-     * |Esc|  1|  2|  3|  4|  5|  6|  7|  8|  9|  0|  -|  =|  Backs|
-     * |-----------------------------------------------------------|
-     * |Tab  |  Q|  W|  E|  R|  T|  Y|  U|  I|  O|  P|  [|  ]|    \|
-     * |-----------------------------------------------------------|
-     * |CapsLo|  A|  S|  D|  F|  G|  H|  J|  K|  L|  ;|  '|Enter   |
-     * |-----------------------------------------------------------|
-     * |Shif|   |  Z|  X|  C|  V|  B|  N|  M|  ,|  .|  /|Shift     |
-     * |-----------------------------------------------------------|
-     * |Ctrl|Gui |Alt |         Space    |Alt |Gui |  FN  | Ctrl   |
-     * `-----------------------------------------------------------'
-     */
-    /* default */
+const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     [_BASE] = LAYOUT_60_ansi_split_bs_rshift(
-        KC_GESC,   KC_1,   KC_2,   KC_3,   KC_4,   KC_5,   KC_6,   KC_7,   KC_8,   KC_9,   KC_0,   KC_MINS,KC_EQL, TD(TD_LDR),KC_NO,
-        KC_TAB,    KC_Q,   KC_W,   KC_E,   KC_R,   KC_T,   KC_Y,   KC_U,   KC_I,   KC_O,   KC_P,   KC_LBRC,KC_RBRC,KC_BSPC,
-        TT(_FNAV), KC_A,   KC_S,   KC_D,   KC_F,   KC_G,   KC_H,   KC_J,   KC_K,   KC_L,   KC_SCLN,KC_QUOT,KC_ENT,
-        KC_LSFT,   KC_Z,   KC_X,   KC_C,   KC_V,   KC_B,   KC_N,   KC_M,   KC_COMM,KC_DOT, KC_SLSH, TILDE,KC_NO,
-        KC_LCTL,   KC_LGUI,TD(TD_DKL),            LT(_FNAV, KC_SPC),       TD(TD_DKR),TG(_NUMPAD),MO(_MEDIA), KC_RCTL
+        KC_GESC,   KC_1,   KC_2,   KC_3,   KC_4,   KC_5,   KC_6,   KC_7,   KC_8,   KC_9,   KC_0,   KC_MINS, KC_EQL, TD(TD_LDR),KC_NO,
+        KC_TAB,    KC_Q,   KC_W,   KC_E,   KC_R,   KC_T,   KC_Y,   KC_U,   KC_I,   KC_O,   KC_P,   KC_LBRC, KC_RBRC,KC_BSPC,
+        TT(_FNAV), KC_A,   KC_S,   KC_D,   KC_F,   KC_G,   KC_H,   KC_J,   KC_K,   KC_L,   KC_SCLN,KC_QUOT, KC_ENT,
+        KC_LSFT,   KC_Z,   KC_X,   KC_C,   KC_V,   KC_B,   KC_N,   KC_M,   KC_COMM,KC_DOT, KC_SLSH,KC_RSFT, KC_NO,
+        KC_LCTL,   KC_LGUI,TD(TD_DKL),            LT(_FNAV, KC_SPC),      TD(TD_DKR),TG(_NUMPAD),MO(_MEDIA), KC_RCTL
     ),
 
     /* numpad */
@@ -106,7 +85,7 @@ const uint16_t keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         KC_CAPS,KC_DMP2,_______,_______,_______,_______,_______,KC_PGUP,KC_UP,KC_PGDN,KC_PSCR,_______,_______,KC_DEL,
         _______,KC_DMP1,KC_BTN2,KC_BTN1,_______,_______,KC_HOME,KC_LEFT,KC_DOWN,KC_RGHT,KC_INS,_______,_______,
         _______,KC_APP, _______,KC_CALC,_______,_______,KC_END,_______,_______,_______,_______,_______,KC_NO,
-        _______,_______,_______,               _______,           CTLALTDEL,KC_NLCK,_______,_______
+        _______,_______,_______,               _______,           TD(TD_CAD),KC_NLCK,_______,_______
     ),
 
     /* media */
@@ -182,7 +161,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     switch (keycode) {
         case ALL:
           if(record->event.pressed) {
-            led_mode_global = led_mode_global == ALL ? MODE_SINGLE : ALL;
+            led_mode_global = led_mode_global == MODE_ALL ? MODE_SINGLE : MODE_ALL;
             msg=TOGGLE_ALL;
             chMBPost(&led_mailbox, msg, TIME_IMMEDIATE);
           }
@@ -198,7 +177,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
 
         case GAME:
           if(record->event.pressed) {
-            led_mode_global = led_mode_global == GAME ? MODE_SINGLE : GAME;
+            led_mode_global = led_mode_global == MODE_GAME ? MODE_SINGLE : MODE_GAME;
 
             msg=(4 << 8) | DISPLAY_PAGE;
             chMBPost(&led_mailbox, msg, TIME_IMMEDIATE);
@@ -314,12 +293,12 @@ void led_matrix_indicators_user(void) {
     return;
   }
 
-  if (led_layer_state != layer_state && led_mode_global != GAME && led_mode_global != ALL) {
+  if (led_layer_state != layer_state && led_mode_global != MODE_GAME && led_mode_global != MODE_ALL) {
     //check mode
     //Turn on layer indicator or page depending on mode
     switch(led_mode_global) {
       case MODE_FLASH: //flash preset page leds then single indicator
-        page = biton32(layer_state) > max_pages ? 7 : biton32(layer_state);
+        page = biton32(layer_state) > MAX_PAGES ? 7 : biton32(layer_state);
         msg=(page << 8) | DISPLAY_PAGE;
         chMBPost(&led_mailbox, msg, TIME_IMMEDIATE);
         chThdSleepMilliseconds(500);
@@ -334,7 +313,7 @@ void led_matrix_indicators_user(void) {
         break;
 
       case MODE_PAGE: //display pre-defined led page
-        page = biton32(layer_state) > max_pages ? 7 : biton32(layer_state);
+        page = biton32(layer_state) > MAX_PAGES ? 7 : biton32(layer_state);
         msg=(page << 8) | DISPLAY_PAGE;
         chMBPost(&led_mailbox, msg, TIME_IMMEDIATE);
         break;
