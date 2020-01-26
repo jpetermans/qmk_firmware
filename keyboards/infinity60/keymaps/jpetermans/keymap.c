@@ -36,17 +36,7 @@ enum ic60_keycodes {
     LED_SK,
     LED_PG,
     LED_FLSH,
-    DYNAMIC_MACRO_RANGE,
 };
-
-//must be after DYNAMIC_MACRO_RANGE is set¬
-#include "dynamic_macro.h"
-#define KC_DRS1 DYN_REC_START1
-#define KC_DRS2 DYN_REC_START2
-#define KC_DMP1 DYN_MACRO_PLAY1
-#define KC_DMP2 DYN_MACRO_PLAY2
-#define KC_DRS  DYN_REC_STOP
-
 
 uint32_t led_layer_state = 0; //used to match led layers to the current keymap layer
 uint8_t led_mode_global = MODE_SINGLE;
@@ -82,8 +72,8 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     /* F-, arrow, and media keys */
     [_FNAV] = LAYOUT_60_ansi_split_bs_rshift(
         KC_GRV, KC_F1,  KC_F2,  KC_F3,  KC_F4,  KC_F5,  KC_F6,  KC_F7,  KC_F8,  KC_F9,  KC_F10, KC_F11, KC_F12, _______,KC_NO,
-        KC_CAPS,KC_DMP2,_______,_______,_______,_______,_______,KC_PGUP,KC_UP,KC_PGDN,KC_PSCR,_______,_______,KC_DEL,
-        _______,KC_DMP1,KC_BTN2,KC_BTN1,_______,_______,KC_HOME,KC_LEFT,KC_DOWN,KC_RGHT,KC_INS,_______,_______,
+        KC_CAPS,DM_PLY2,_______,_______,_______,_______,_______,KC_PGUP,KC_UP,KC_PGDN,KC_PSCR,_______,_______,KC_DEL,
+        _______,DM_PLY1,KC_BTN2,KC_BTN1,_______,_______,KC_HOME,KC_LEFT,KC_DOWN,KC_RGHT,KC_INS,_______,_______,
         _______,KC_APP, _______,KC_CALC,_______,_______,KC_END,_______,_______,_______,_______,_______,KC_NO,
         _______,_______,_______,               _______,           TD(TD_CAD),KC_NLCK,_______,_______
     ),
@@ -91,9 +81,9 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     /* media */
     [_MEDIA] = LAYOUT_60_ansi_split_bs_rshift(
         _______, LED_SK,LED_PG,LED_FLSH,_______,_______,_______, _______, _______, _______,KC_MUTE, KC_VOLD, KC_VOLU,_______,KC_NO,
-        _______,KC_DRS2,_______,_______,_______,_______,_______, _______, _______, _______,_______, _______,_______,_______,
-        _______,KC_DRS1,_______,_______,_______,   GAME,_______, _______, _______, _______,_______, _______,_______,
-        _______,KC_DRS,     ALL, BRIGHT,    DIM, BACKLT,_______, _______, KC_MPRV, KC_MNXT,KC_MSTP, _______,KC_NO,
+        _______,DM_REC2,_______,_______,_______,_______,_______, _______, _______, _______,_______, _______,_______,_______,
+        _______,DM_REC1,_______,_______,_______,   GAME,_______, _______, _______, _______,_______, _______,_______,
+        _______,DM_RSTP,     ALL, BRIGHT,    DIM, BACKLT,_______, _______, KC_MPRV, KC_MNXT,KC_MSTP, _______,KC_NO,
         _______,_______,_______,                KC_MPLY,             _______,_______, _______,_______
     ),
     /* template */
@@ -153,10 +143,6 @@ uint8_t led_game[5] = {
 //======== qmk functions =========
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     msg_t msg;
-
-    if (!process_record_dynamic_macro(keycode, record)) {
-        return false;
-    }
 
     switch (keycode) {
         case ALL:
