@@ -10,6 +10,11 @@
 #define LED_KEYS_SINGLE 0x10
 #define LED_KEYS_ACTIVE 0x20
 
+#ifdef USB_LED_CAPS_LOCK_SCANCODE
+#undef USB_LED_CAPS_LOCK_SCANCODE
+#endif
+#define USB_LED_CAPS_LOCK_SCANCODE 69
+
 #define MODS_SHIFT  (get_mods() & MOD_BIT(KC_LSHIFT) || get_mods() & MOD_BIT(KC_RSHIFT))
 #define MODS_CTRL  (get_mods() & MOD_BIT(KC_LCTL) || get_mods() & MOD_BIT(KC_RCTRL))
 #define MODS_ALT  (get_mods() & MOD_BIT(KC_LALT) || get_mods() & MOD_BIT(KC_RALT))
@@ -30,18 +35,7 @@ enum alt_keycodes {
     KC_LKSL,
     KC_LKAK,
     LK_____,
-    DYNAMIC_MACRO_RANGE,    //Dynamic macros
 };
-
-//must be after DYNAMIC_MACRO_RANGE is set
-#include "dynamic_macro.h"
-#define KC_DRS1 DYN_REC_START1
-#define KC_DRS2 DYN_REC_START2
-#define KC_DMP1 DYN_MACRO_PLAY1
-#define KC_DMP2 DYN_MACRO_PLAY2
-#define KC_DRS  DYN_REC_STOP
-#define TG_NKRO MAGIC_TOGGLE_NKRO //Toggle 6KRO / NKRO mode
-
 
 enum tap_keys {
     TD_CAD,
@@ -64,7 +58,7 @@ enum alt_layers {
 
 
 keymap_config_t keymap_config;
-uint16_t led_mode_global = 0x00; //start off
+uint16_t led_mode_global = LED_UNDERGLOW_SINGLE; //start off
 
 // leader key
 LEADER_EXTERNS();
@@ -91,8 +85,8 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     ),
     [_FNAV] = LAYOUT(
         KC_GRV,    KC_F1,   KC_F2,   KC_F3,   KC_F4,   KC_F5,   KC_F6,   KC_F7, KC_F8,    KC_F9,  KC_F10,  KC_F11,  KC_F12,  _______, TG(_LOCK),
-        KC_CAPS, KC_DMP2, _______, _______, _______, _______, _______, KC_PGUP, KC_UP,  KC_PGDN, KC_PSCR, _______, _______,   KC_DEL, _______,
-        _______, KC_DMP1, KC_BTN2, KC_BTN1, _______, _______, KC_HOME, KC_LEFT, KC_DOWN,KC_RGHT,  KC_INS, _______,           _______, _______,
+        KC_CAPS, DM_PLY2, _______, _______, _______, _______, _______, KC_PGUP, KC_UP,  KC_PGDN, KC_PSCR, _______, _______,   KC_DEL, _______,
+        _______, DM_PLY1, KC_BTN2, KC_BTN1, _______, _______, KC_HOME, KC_LEFT, KC_DOWN,KC_RGHT,  KC_INS, _______,           _______, _______,
         _______,  KC_APP, _______, KC_CALC, _______, _______, KC_END,  _______, _______, _______, _______, _______,          KC_VOLU, OSL(_SYS),
         _______, _______, _______,                            _______,                            _______, KC_NLCK, KC_MUTE, KC_VOLD, KC_MPLY
     ),
@@ -118,10 +112,10 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         XXXXXXX, XXXXXXX, XXXXXXX,                            XXXXXXX,                            XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX
     ),
     [_SYS] = LAYOUT(
-        XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, KC_DRS1,
-        XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, KC_DRS2,
-       TG(_SYS), XXXXXXX ,XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,          XXXXXXX, KC_DRS,
-        XXXXXXX, XXXXXXX ,XXXXXXX, XXXXXXX, XXXXXXX, MD_BOOT, TG_NKRO, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,          XXXXXXX, XXXXXXX,
+        XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, DM_REC1,
+        XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, DM_REC2,
+       TG(_SYS), XXXXXXX ,XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,          XXXXXXX, DM_RSTP,
+        XXXXXXX, XXXXXXX ,XXXXXXX, XXXXXXX, XXXXXXX, MD_BOOT, NK_TOGG, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,          XXXXXXX, XXXXXXX,
         XXXXXXX, XXXXXXX, XXXXXXX,                            KC_LEAD,                            XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX
     ),
     /*
@@ -167,6 +161,12 @@ void matrix_scan_user(void) {
       LEADER_DICTIONARY() {
           leader_success = leading = false;
           leader_unlock = false;
+
+          SEQ_ONE_KEY(KC_7) {
+              register_code(KC_NLCK);
+              unregister_code(KC_NLCK);
+              leader_success = true;
+          }
 
           SEQ_TWO_KEYS(KC_W, KC_Q) {
               SEND_STRING(SS_LALT(SS_TAP(X_F4)));
@@ -226,10 +226,6 @@ void leader_end(void){
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     static uint32_t key_timer;
-
-    if (!process_record_dynamic_macro(keycode, record)) {
-        return false;
-    }
 
     switch (keycode) {
         case KC_LALL:
@@ -356,17 +352,17 @@ void rgb_matrix_indicators_user(void) {
     //read global setting for all, keys, underglow, underglow indicator or key indicator and set led_mode_global
     if (prior_layer != layer_state) {
         prior_layer = layer_state;
-        rgb_matrix_layer_helper(0X00, 0x00, 0x00, arr_ledindex, LED_UNDERGLOW); // reset underglow for heatmap and digital rain effects
+        /* rgb_matrix_layer_helper(0X00, 0x00, 0x00, arr_ledindex, LED_UNDERGLOW); // reset underglow for heatmap and digital rain effects */
 
         switch (biton32(layer_state)) {
             case _BASE:
-                arr_ledindex [0] = 69; // led_gsk
+                arr_ledindex [0] = 70; // led_gsk
                 arr_ledindex [1] = 1;// led_ksk
                 rgb_matrix_layer_helper(RGB_WHITE, arr_ledindex, led_mode_global);
                 break;
 
             case _NUMPAD:
-                arr_ledindex [0] = 69; // led_gsk
+                arr_ledindex [0] = 70; // led_gsk
                 arr_ledindex [1] = 3; // led_ksk
                 rgb_matrix_layer_helper(RGB_GREEN, arr_ledindex, led_mode_global);
                 break;
@@ -379,20 +375,20 @@ void rgb_matrix_indicators_user(void) {
 
             case _LOCK:
             case _UNLOCK:
-                arr_ledindex [0] = 69; // led_gsk
+                arr_ledindex [0] = 70; // led_gsk
                 arr_ledindex [1] = 14;// led_ksk
                 rgb_matrix_layer_helper(RGB_RED, arr_ledindex, led_mode_global);
                 break;
             /* case _UNLOCK: */
 
             case _LED:
-                arr_ledindex [0] = 69; // led_gsk
+                arr_ledindex [0] = 70; // led_gsk
                 arr_ledindex [1] = 4; // led_ksk
                 rgb_matrix_layer_helper(RGB_GOLD, arr_ledindex, led_mode_global);
                 break;
 
             case _SYS:
-                arr_ledindex [0] = 69; // led_gsk
+                arr_ledindex [0] = 70; // led_gsk
                 arr_ledindex [1] = 5; // led_ksk
                 rgb_matrix_layer_helper(RGB_CORAL, arr_ledindex, led_mode_global);
         }
@@ -400,23 +396,23 @@ void rgb_matrix_indicators_user(void) {
     
     uint8_t this_led = host_keyboard_leds();
     //process CAPSLOCK LED
-    /* if (this_led & (1 << USB_LED_CAPS_LOCK)) { */
-    /*     rgb_matrix_set_color(31, 0x00, 0xFF, 0x00); */
-    /* } else { */
-    /*     rgb_matrix_set_color(31, 0x00, 0x00, 0x00); */
-    /* } */
+    if (this_led & (1 << USB_LED_CAPS_LOCK)) {
+        rgb_matrix_set_color(69, 0x47, 0x6E, 0x6A); //turquoise
+    } else {
+        rgb_matrix_set_color(69, 0x00, 0x00, 0x00);
+    }
 
     //process NUMLOCK LED
     if (this_led & (1 << USB_LED_NUM_LOCK)) {
-        rgb_matrix_set_color(80, 0x00, 0xFF, 0x00);
+        rgb_matrix_set_color(68, 0x00, 0xFF, 0x00); //green
     } else {
-        rgb_matrix_set_color(80, 0x00, 0x00, 0x00);
+        rgb_matrix_set_color(68, 0x00, 0x00, 0x00);
     }
 }
 
 
 // Runs just one time when the keyboard initializes.
-void matrix_init_user(void) {
+void keyboard_post_init_user(void) {
     arr_ledindex[0] = 69;
     arr_ledindex[1] = 1;
     rgb_matrix_layer_helper(RGB_WHITE, arr_ledindex, LED_UNDERGLOW_SINGLE);
