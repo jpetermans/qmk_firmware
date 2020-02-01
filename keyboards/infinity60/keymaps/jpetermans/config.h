@@ -1,5 +1,11 @@
 #pragma once
 
+//led matrix
+#define LED_DRIVER_ADDR_1 0b1110100
+#define LED_DRIVER_COUNT 1
+#define LED_DRIVER_LED_COUNT 63
+#define BACKLIGHT_LEVELS 6
+
 //overrides¬
 #undef TAPPING_TOGGLE
 #define TAPPING_TOGGLE 3
